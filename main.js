@@ -3,12 +3,12 @@ var lib = require('./lib');
 
 program
   .version('0.0.1')
-  .option('-d, --startDefaultService', 'Start default service')
-  .option('-c, --startCustomService', 'Start default service')
-  .option('-b, --buildAll', 'Build All')
+  .option('-d, --startDefaultService', 'Start default services.')
+  .option('-c, --startCustomService', 'Start custom services')
+  .option('-m --startService <size>', 'Start service', /^(large|medium|small)$/i, 'medium')
+  .option('-b, --buildAll', 'Build All folder and start default services.')
   .option('-a, --buildAnt', 'Build Ant')
   .option('-o, --buildOv2500', 'Build Ant')
-  .option('-m --startService <size>', 'Start service', /^(large|medium|small)$/i, 'medium')
   .parse(process.argv);
 
 console.log('exec command:');
