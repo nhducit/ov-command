@@ -1,31 +1,28 @@
 var program = require('commander');
-var lib = require('./lib');
+var commands = require('./commands');
+
 
 program
-  .version('0.0.1')
-  .option('-d, --startDefaultService', 'Start default services.')
-  .option('-c, --startCustomService', 'Start custom services')
-  .option('-m --startService <size>', 'Start service', /^(large|medium|small)$/i, 'medium')
-  .option('-b, --buildAll', 'Build All folder and start default services.')
-  .option('-a, --buildAnt', 'Build Ant')
-  .option('-o, --buildOv2500', 'Build Ant')
-  .parse(process.argv);
+  .version('0.1.0');
 
-console.log('exec command:');
-if (program.startDefaultService) {
-  lib.startDefaultService();
-}
-if (program.startCustomService) {
-  lib.startCustomService();
-}
-if (program.buildAll) {
-  lib.build();
-}
+program
+  .command('build [mode]')
+  .description('run setup commands for all envs')
+  // .option("-s, --setup_mode [mode]", "Which setup mode to use")
+  .action(function(mode/*, options*/){
+    // var mode = options.setup_mode || "normal";
+    var _mode = mode || 'all';
+    commands.getBuildFn(_mode);
+  });
 
-if (program.buildAnt) {
-  lib.buildAnt();
-}
+program
+  .command('start <mode>')
+  // .alias('ex')
+  .description('execute the given remote cmd')
+  // .option("-e, --exec_mode <mode>", "Which exec mode to use")
+  .action(function(mode, options){
+    var _mode = mode || 'default';
+    commands.getStartServiceFn(_mode);
+  });
 
-if (program.buildOv2500) {
-  lib.buildOvCode();
-}
+program.parse(process.argv);

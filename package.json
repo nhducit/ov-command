@@ -13,6 +13,7 @@
     "bluebird": "^3.3.4",
     "child-process-promise": "^1.1.0",
     "commander": "^2.9.0",
+    "del": "^2.2.0",
     "winston": "^2.2.0"
   }
 }
