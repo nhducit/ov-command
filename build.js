@@ -1,11 +1,13 @@
 var Promise = require('bluebird');
 var del = require('del');
 var spawn = require('child-process-promise').spawn;
+var Spinner = require('cli-spinner').Spinner;
+
 //
-var config = require('./config');
+var config = require('./ovConfig');
 var logger = require('./logger');
 //
-
+var startService = require('./startService');
 //
 
 module.exports = {
@@ -21,99 +23,111 @@ module.exports = {
  * @returns {*}
  */
 function deleteLogFile(fileName) {
-  return del(['logs/' + fileName]).then(function (paths) {
-    console.log('Deleted files and folders:\n', paths.join('\n'));
-  });
+  var spinner = getNewSpinner('Delete file: '+ fileName);
+  spinner.start();
+  return del(['logs/' + fileName])
+    .then(function (paths) {
+      spinner.stop();
+      console.log('Deleted files and folders:\n', paths.join('\n'));
+    });
 }
 
 /**
  *
  */
-function buildAnt() {
-  var ant = 'ant -f release.xml buildinstallers:';
+function buildAnt(hideSpinner) {
+  var ant = 'Build ant folder';
   return deleteLogFile('ant.log')
     .then(function () {
-      return new Promise(function (resolve, reject) {
-        spawn('ant', ['-f', 'release.xml', 'buildinstallers'], {cwd: config.antFolder})
-          .progress(function (childProcess) {
-            logger.ant.info('[spawn] childProcess.pid: ', childProcess.pid);
-            childProcess.stdout.on('data', function (data) {
-              logger.ant.info(ant, data.toString());
-            });
-            childProcess.stderr.on('data', function (data) {
-              reject('bkjdaskjbdkjasbdk');
-              logger.ant.info(ant, data.toString());
-            });
-          })
-          .then(function () {
-            resolve();
-            logger.ant.info(ant, ' done!');
-          })
-          .fail(function (err) {
-            reject();
-            logger.ant.error('[spawn] ERROR: ', err);
-          });
-      });
+      var spawnConfig = {
+        logger: logger.ant,
+        taskName: ant,
+        hideSpinner: hideSpinner,
+        command: {
+          command: 'ant',
+          args: ['-f', 'release.xml', 'buildinstallers'],
+          cwd: config.env.antFolder
+        }
+      };
+      return spawnCommand(spawnConfig);
     });
 }
 
 /**
  *
  */
-function buildOvCode() {
-  var build2500 = 'Build code of OV2500 & NGNMS:';
+function buildOvCode(hideSpinner) {
+  var build2500 = 'Build OV Code:';
   return deleteLogFile('ov2500.log').then(function () {
-    return new Promise(function (resolve, reject) {
-      spawn('mvn', ['clean', 'install', '-Dtest'], {cwd: config.ov2500Folder})
-        .progress(function (childProcess) {
-          logger.ov2500.info('[spawn] childProcess.pid: ', childProcess.pid);
-          childProcess.stdout.on('data', function (data) {
-            logger.ov2500.info(build2500, data.toString());
-          });
-          childProcess.stderr.on('data', function (data) {
-            reject();
-            logger.ov2500.info(build2500, data.toString());
-          });
-        })
-        .then(function () {
-          resolve();
-          logger.ov2500.info(build2500, ' done!');
-        })
-        .fail(function (err) {
-          reject();
-          logger.ov2500.error(build2500, ' ERROR: ', err);
-        });
-    });
+    var spawnConfig = {
+      logger: logger.ov2500,
+      taskName: build2500,
+      hideSpinner: hideSpinner,
+      command: {
+        command: 'mvn',
+        args: ['clean', 'install', '-Dtest'],
+        cwd: config.env.ov2500Folder
+      }
+    };
+    return spawnCommand(spawnConfig);
   });
 }
 
 /**
  *
  */
-function buildStage() {
-  var buildStageName = 'Build Stage';
+function buildStage(hideSpinner) {
+  var buildStageName = 'Build Stage folder';
   return deleteLogFile('stage.log').then(function () {
-    return new Promise(function (resolve, reject) {
-      spawn('mvn', ['clean', 'install'], {cwd: config.stageFolder})
-        .progress(function (childProcess) {
-          logger.stage.info('[spawn] childProcess.pid: ', childProcess.pid);
-          childProcess.stdout.on('data', function (data) {
-            logger.stage.info(buildStageName, data.toString());
-          });
-          childProcess.stderr.on('data', function (data) {
-            reject();
-            logger.stage.info(buildStageName, data.toString());
-          });
-        })
-        .then(function () {
-          resolve();
-          logger.stage.info(buildStageName, ' done!');
-        })
-        .fail(function (err) {
-          reject();
-          logger.stage.error(buildStage, ' ERROR: ', err);
+    var spawnConfig = {
+      logger: logger.stage,
+      taskName: buildStageName,
+      hideSpinner: hideSpinner,
+      command: {
+        command: 'mvn',
+        args: ['clean', 'install'],
+        cwd: config.env.stageFolder
+      }
+    };
+    return spawnCommand(spawnConfig);
+  });
+}
+
+/**
+ *
+ * @param config
+ */
+function spawnCommand(config) {
+  var logger = config.logger;
+  var taskName = config.taskName;
+  var command = config.command;
+  var spinner = getNewSpinner(taskName);
+  if (!config.hideSpinner) {
+    spinner.start();
+  }
+  return new Promise(function (resolve, reject) {
+    spawn(command.command, command.args || [], {cwd: command.cwd})
+      .progress(function (childProcess) {
+        logger.info('[spawn] childProcess.pid: ', childProcess.pid);
+        childProcess.stdout.on('data', function (data) {
+          logger.info(taskName, data.toString());
         });
-    })
+        childProcess.stderr.on('data', function (data) {
+          // reject(data.toString());
+          logger.error(taskName, data.toString());
+        });
+      })
+      .then(function () {
+
+        spinner || spinner.stop || spinner.stop();
+        logger.info(taskName, ' done!');
+        resolve();
+      })
+      .fail(function (err) {
+        spinner || spinner.stop || spinner.stop();
+        logger.error(taskName, ' ERROR: ', err);
+        reject(err);
+      });
   });
 }
 
@@ -121,11 +135,21 @@ function buildStage() {
  *
  */
 function build() {
-  var promises = [buildAnt(), buildOvCode()];
+  var spinner = getNewSpinner('Build ant folder, OV code and stage folder:');
+  spinner.start();
+  var promises = [buildAnt(true), buildOvCode(true)];
   return Promise.all(promises).then(function (/*successData*/) {
-    return buildStage().then(function () {
-      startDefaultService();
-    });
+
+    return buildStage(true)
+      .then(function () {
+        return startService.defaultService();
+      })
+      .catch(function (errr) {
+      })
+      .then(function () {
+        spinner.stop();
+      })
+      ;
   });
 }
 /**
@@ -135,3 +159,21 @@ function build() {
 function isLinux() {
   return os.platform() === 'linux';
 }
+
+function getNewSpinner(taskName) {
+  var spinner = new Spinner(taskName + ' .. %s');
+  spinner.setSpinnerString('|/-\\');
+  return spinner;
+}
+
+// NOTE: event name is camelCase as per node convention
+process.on("unhandledRejection", function (reason, promise) {
+  console.log('unhandledRejection', reason);
+  // See Promise.onPossiblyUnhandledRejection for parameter documentation
+});
+
+// NOTE: event name is camelCase as per node convention
+process.on("rejectionHandled", function (promise) {
+  console.log('rejectionHandled');
+  // See Promise.onUnhandledRejectionHandled for parameter documentation
+});

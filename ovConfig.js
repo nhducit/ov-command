@@ -13,20 +13,8 @@ module.exports = {
       'ovclient',
       'tomcat'
     ],
-    custom: [
-      'mongodb',
-      'activemq',
-      'ovserver',
-      'ovclient',
-      'tomcat'
-    ],
-    vlan: [
-      'mongodb',
-      'activemq',
-      'ovserver',
-      'ovclient',
-      'tomcat'
-    ]
+    custom: [],
+    vlan: ['hsqldb', 'dal', 'masterpoller', 'workerpoller', 'scheduler', 'vlan']
   }
 };
 

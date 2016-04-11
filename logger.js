@@ -1,3 +1,5 @@
+var winston = require('winston');
+
 var logger = {};
 logger.ant = new (winston.Logger)({
   exitOnError: false, //don't crash on exception

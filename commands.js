@@ -1,27 +1,30 @@
+var build = require('./build');
+var _ = require('lodash');
+var startService = require('./startService');
+
 module.exports = {
   getStartServiceFn: getStartServiceFn,
+  startServiceList: startServiceList,
   getBuildFn: getBuildFn
 };
-var build = require('./build');
-var startService = require('./startService');
 
 var buildMap = {
   all: build.build,
   ant: build.buildAnt,
-  ov2500: build.buildOvCode
-};
-
-var startServiceMap = {
-  default: startService.startDefaultService,
-  custom: startService.startDefaultService
+  stage: build.buildStage,
+  ov: build.buildOvCode
 };
 
 function getStartServiceFn(type) {
-  (startServiceMap[type] || function () {
-    if (type !== true) {
-      console.log('Start service type argument is not supported: ', type);
-    }
-  })();
+  startService.group(type);
+}
+
+function startServiceList(serviceList) {
+  if (_.isArray(serviceList)) {
+    startService.list(serviceList)
+  } else {
+    console.log('startServiceList: args is not an array', serviceList);
+  }
 }
 
 function getBuildFn(type) {

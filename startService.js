@@ -1,30 +1,20 @@
 var Promise = require('bluebird');
 var fs = require('fs');
+var _ = require('lodash');
 var spawn = require('child-process-promise').spawn;
 var exec = require('child-process-promise').exec;
 //
-var config = require('./config');
+var config = require('./ovConfig');
 var logger = require('./logger');
 //
 
 //
 
 module.exports = {
-  startDefaultService: startDefaultService,
-  startService: startService,
-  startCustomService: startCustomService
+  service: startService,
+  list: startListOfServices,
+  group: startGroup
 };
-/**
- *
- */
-function startDefaultService() {
-  var services = ['mongodb', 'activemq', 'ovserver', 'ovclient', 'tomcat'];
-  var promises = [];
-  services.forEach(function (serviceName) {
-    promises.push(startService(serviceName));
-  });
-  return Promise.all(promises);
-}
 
 /**
  *
@@ -34,7 +24,7 @@ function startDefaultService() {
 function startService(serviceName) {
   var taskName = 'start service' + serviceName;
   return new Promise(function (resolve, reject) {
-    spawn('./runservice.sh', [serviceName], {cwd: config.scriptFolder})
+    spawn('./runservice.sh', [serviceName], {cwd: config.env.scriptFolder})
       .progress(function (childProcess) {
         console.log('[spawn] childProcess.pid: ', childProcess.pid);
         childProcess.stdout.on('data', function (data) {
@@ -42,8 +32,8 @@ function startService(serviceName) {
         });
         childProcess.stderr.on('data', function (data) {
           //TODO: when program reach this line??? should we reject here
-          reject();
-          console.log(taskName, data.toString());
+          reject(data.toString());
+          console.error(taskName, data.toString());
         });
       })
       .then(function () {
@@ -52,13 +42,13 @@ function startService(serviceName) {
       })
       .fail(function (err) {
         console.error(taskName, ' ERROR: ', err);
-        reject();
+        reject(err);
       });
   });
 }
 
 function startListOfServices(services) {
-  if (!services || !services.length) {
+  if (!_.isArray(services)) {
     console.log('startListOfServices: empty service list', services);
     return;
   }
@@ -69,13 +59,13 @@ function startListOfServices(services) {
   return Promise.all(promises);
 }
 
-/**
- *
- */
-function startCustomService() {
-  var services = ['hsqldb', 'dal', 'masterpoller', 'workerpoller', 'scheduler', 'vlan'];
-  return startListOfServices(services);
+function startGroup(groupName) {
+  var services = config.serviceGroup[groupName];
+  return startListOfServices(services)
 }
+
+
+
 
 /**
  *
@@ -96,27 +86,6 @@ function setJavaToolOptions() {
   }
 }
 
-function getConfig() {
-  return new Promise(function(resolve, reject){
-    fs.readFile('./config.json', 'utf8', function (err, jsonContent) {
-      if(err){
-        reject(err);
-      }
-      var config;
-      try {
-        config = JSON.parse(jsonContent);
-        resolve(config);
-      }catch (err){
-        reject(err);
-      }
-    });
-
-  });
-
-}
-// getConfig().then(function(json){
-//   console.log(json);
-// });
 /**
  * determine operation system
  * @returns {boolean}
