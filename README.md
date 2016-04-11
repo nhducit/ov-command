@@ -13,3 +13,6 @@
 - del: delete file and folder
 - winston: logging information to files
 - cli-spinner: command-line spinner
+
+## TODO:
+Kill ongoing process when 1 of simultaneously build process is failed. (user onCancel callback of Bluebird promise)
