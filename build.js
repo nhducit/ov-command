@@ -142,7 +142,7 @@ function build() {
 
     return buildStage(true)
       .then(function () {
-        return startService.defaultService();
+        return startService.default();
       })
       .catch(function (errr) {
       })

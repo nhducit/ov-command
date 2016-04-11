@@ -13,8 +13,14 @@ var logger = require('./logger');
 module.exports = {
   service: startService,
   list: startListOfServices,
+  default: startDefaultGroup,
   group: startGroup
 };
+
+
+function startDefaultGroup() {
+  return startGroup('default');
+}
 
 /**
  *
