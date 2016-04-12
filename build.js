@@ -1,7 +1,7 @@
 var Promise = require('bluebird');
 var del = require('del');
-// var spawn = require('child-process-promise').spawn;
-var spawn = require('cross-spawn-async');
+var spawn = require('child-process-promise').spawn;
+// var spawn = require('cross-spawn-async');
 var Spinner = require('cli-spinner').Spinner;
 
 //
