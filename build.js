@@ -162,7 +162,8 @@ function build() {
  * @returns {boolean}
  */
 function isLinux() {
-  return os.platform() === 'linux';
+  console.log(process.platform);
+  return process.platform === 'linux';
 }
 
 function getNewSpinner(taskName) {
