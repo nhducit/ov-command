@@ -1,6 +1,7 @@
 var Promise = require('bluebird');
 var del = require('del');
-var spawn = require('child-process-promise').spawn;
+// var spawn = require('child-process-promise').spawn;
+var spawn = require('cross-spawn-async');
 var Spinner = require('cli-spinner').Spinner;
 
 //
@@ -23,7 +24,7 @@ module.exports = {
  * @returns {*}
  */
 function deleteLogFile(fileName) {
-  var spinner = getNewSpinner('Delete file: '+ fileName);
+  var spinner = getNewSpinner('Delete file: ' + fileName);
   spinner.start();
   return del(['logs/' + fileName])
     .then(function (paths) {
@@ -106,7 +107,7 @@ function spawnCommand(config) {
     spinner.start();
   }
   return new Promise(function (resolve, reject) {
-    spawn(command.command, command.args || [], {cwd: command.cwd})
+    spawn(getCrossPlatformCommand(command.command), command.args || [], {cwd: command.cwd})
       .progress(function (childProcess) {
         logger.info('[spawn] childProcess.pid: ', childProcess.pid);
         childProcess.stdout.on('data', function (data) {
@@ -129,6 +130,10 @@ function spawnCommand(config) {
         reject(err);
       });
   });
+}
+
+function getCrossPlatformCommand(command) {
+  return isLinux() ? command : command + '.bat';
 }
 
 /**
