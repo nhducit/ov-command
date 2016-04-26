@@ -104,6 +104,7 @@ function spawnCommand(config) {
   var command = config.command;
   var spinner = getNewSpinner(taskName);
   if (!config.hideSpinner) {
+console.log(' ');
     spinner.start();
   }
   return new Promise(function (resolve, reject) {

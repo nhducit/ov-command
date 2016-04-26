@@ -35,7 +35,7 @@ var serviceList = ['activemq','ag','analytics','av', 'byod',
 ];
 
 program
-  .command('startList <service> [otherServices...]')
+  .command('start <service> [otherServices...]')
   .description('Start list of services: ' + serviceList.join(', '))
   .action(function (service, otherServices) {
     var services = [service];

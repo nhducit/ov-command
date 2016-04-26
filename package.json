@@ -1,14 +1,24 @@
 {
-  "name": "ov-command",
-  "version": "1.3.0",
+  "name": "ot",
+  "version": "1.6.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "startDefault": "node main.js -d",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nhducit/ov-command.git"
+  },
+  "author": "nhducit",
+  "license": "MIT",
+   "bin": {
+     "ot": "main.js"
+   },
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "dependencies": {
     "bluebird": "^3.3.4",
     "child-process-promise": "^1.1.0",
